@@ -887,6 +887,11 @@ PARSER_RC pluginsd_replay_rrdset_begin(char **words, size_t num_words, void *use
         ((PARSER_USER_OBJECT *) user)->replay.end_time_ut = 0;
     }
 
+    if(rrdset_flag_check(st, RRDSET_FLAG_OBSOLETE) && !rrdset_flag_check(st, RRDSET_FLAG_ARCHIVED)) {
+        error("chart '%s' on host '%s' has the OBSOLETE flag set, but it is collected.", rrdset_id(st), rrdhost_hostname(host));
+        rrdset_isnot_obsolete(st);
+    }
+
     if(start_time_str && end_time_str) {
         time_t start_time = strtol(start_time_str, NULL, 0);
         time_t end_time = strtol(end_time_str, NULL, 0);
