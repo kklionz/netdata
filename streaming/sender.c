@@ -21,14 +21,15 @@
 #define WORKER_SENDER_JOB_BUFFER_RATIO              15
 #define WORKER_SENDER_JOB_BYTES_RECEIVED            16
 #define WORKER_SENDER_JOB_BYTES_SENT                17
-#define WORKER_SENDER_JOB_REPLAY_REQUEST            18
-#define WORKER_SENDER_JOB_REPLAY_RESPONSE           19
-#define WORKER_SENDER_JOB_REPLAY_QUEUE_SIZE         20
-#define WORKER_SENDER_JOB_REPLAY_COMPLETION         21
-#define WORKER_SENDER_JOB_FUNCTION                  22
+#define WORKER_SENDER_JOB_REPLICATION               18
+#define WORKER_SENDER_JOB_REPLAY_REQUEST            19
+#define WORKER_SENDER_JOB_REPLAY_RESPONSE           20
+#define WORKER_SENDER_JOB_REPLAY_QUEUE_SIZE         21
+#define WORKER_SENDER_JOB_REPLAY_COMPLETION         22
+#define WORKER_SENDER_JOB_FUNCTION                  23
 
-#if WORKER_UTILIZATION_MAX_JOB_TYPES < 23
-#error WORKER_UTILIZATION_MAX_JOB_TYPES has to be at least 23
+#if WORKER_UTILIZATION_MAX_JOB_TYPES < 24
+#error WORKER_UTILIZATION_MAX_JOB_TYPES has to be at least 24
 #endif
 
 extern struct config stream_config;
@@ -864,6 +865,8 @@ void stream_execute_function_callback(BUFFER *func_wb, int code, void *data) {
 
 // This is just a placeholder until the gap filling state machine is inserted
 void execute_commands(struct sender_state *s) {
+    worker_is_busy(WORKER_SENDER_JOB_EXECUTE);
+
     char *start = s->read_buffer, *end = &s->read_buffer[s->read_len], *newline;
     *end = 0;
     while( start < end && (newline = strchr(start, '\n')) ) {
@@ -941,6 +944,7 @@ void execute_commands(struct sender_state *s) {
             error("STREAM %s [send to %s] received unknown command over connection: %s", rrdhost_hostname(s->host), s->connected_to, words[0]?words[0]:"(unset)");
         }
 
+        worker_is_busy(WORKER_SENDER_JOB_EXECUTE);
         start = newline + 1;
     }
     if (start < end) {
@@ -1184,6 +1188,8 @@ int process_one_replication_request(const DICTIONARY_ITEM *item, void *value, vo
 }
 
 static void process_replication_requests(struct sender_state *s) {
+    worker_is_busy(WORKER_SENDER_JOB_REPLICATION);
+
     size_t entries = dictionary_entries(s->replication_requests);
 
     worker_set_metric(WORKER_SENDER_JOB_REPLAY_QUEUE_SIZE, (NETDATA_DOUBLE)entries);
@@ -1233,6 +1239,7 @@ void *rrdpush_sender_thread(void *ptr) {
     worker_register_job_name(WORKER_SENDER_JOB_DISCONNECT_NO_COMPRESSION, "disconnect no compression");
     worker_register_job_name(WORKER_SENDER_JOB_DISCONNECT_BAD_HANDSHAKE, "disconnect bad handshake");
 
+    worker_register_job_name(WORKER_SENDER_JOB_REPLICATION, "replication");
     worker_register_job_name(WORKER_SENDER_JOB_REPLAY_REQUEST, "replay request");
     worker_register_job_name(WORKER_SENDER_JOB_REPLAY_RESPONSE, "replay response");
     worker_register_job_name(WORKER_SENDER_JOB_FUNCTION, "function");
@@ -1433,10 +1440,8 @@ void *rrdpush_sender_thread(void *ptr) {
                 worker_set_metric(WORKER_SENDER_JOB_BYTES_RECEIVED, bytes);
         }
 
-        if(unlikely(s->read_len)) {
-            worker_is_busy(WORKER_SENDER_JOB_EXECUTE);
+        if(unlikely(s->read_len))
             execute_commands(s);
-        }
 
         process_replication_requests(s);
 
