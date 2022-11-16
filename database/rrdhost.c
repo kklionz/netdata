@@ -902,8 +902,10 @@ int rrd_init(char *hostname, struct rrdhost_system_info *system_info) {
             info("Initializing dbengine...");
             dbengine_init(hostname);
         }
-        else
+        else {
             info("Not initializing dbengine...");
+            storage_tiers = 1;
+        }
 
         if (!dbengine_enabled) {
             if (storage_tiers > 1) {
