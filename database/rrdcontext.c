@@ -3267,10 +3267,12 @@ static void rrdmetric_process_updates(RRDMETRIC *rm, bool force, RRD_FLAGS reaso
     if(worker_jobs)
         worker_is_busy(WORKER_JOB_PP_METRIC);
 
-    if(reason == RRD_FLAG_UPDATE_REASON_DISCONNECTED_CHILD) {
+    if(reason & RRD_FLAG_UPDATE_REASON_DISCONNECTED_CHILD) {
         rrd_flag_set_archived(rm);
         rrd_flag_set(rm, RRD_FLAG_UPDATE_REASON_DISCONNECTED_CHILD);
     }
+    if(rrd_flag_is_deleted(rm) && (reason & RRD_FLAG_UPDATE_REASON_UPDATED_RETENTION))
+        rrd_flag_set_archived(rm);
 
     rrdmetric_update_retention(rm);
 
