@@ -1045,8 +1045,8 @@ static void rrdpush_sender_thread_cleanup_callback(void *ptr) {
 static void replication_request_insert_callback(const DICTIONARY_ITEM *item __maybe_unused, void *value __maybe_unused, void *sender_state __maybe_unused) {
     ;
 }
-static bool replication_request_conflict_callback(const DICTIONARY_ITEM *item, void *old_value, void *new_value, void *sender_state) {
-    struct sender_state *s = sender_state;
+static bool replication_request_conflict_callback(const DICTIONARY_ITEM *item __maybe_unused, void *old_value, void *new_value, void *sender_state) {
+    struct sender_state *s = sender_state; (void)s;
     struct replication_request *rr = old_value;
     struct replication_request *rr_new = new_value;
 

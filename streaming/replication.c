@@ -42,7 +42,7 @@ static time_t replicate_chart_timeframe(BUFFER *wb, RRDSET *st, time_t after, ti
         rrddim_foreach_done(rd);
     }
 
-    time_t now = after + 1, actual_after = 0, actual_before = 0;
+    time_t now = after + 1, actual_after = 0, actual_before = 0; (void)actual_before;
     while(now <= before) {
         time_t min_start_time = 0, min_end_time = 0;
         for (size_t i = 0; i < dimensions && data[i].rd; i++) {
