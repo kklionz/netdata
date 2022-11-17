@@ -1191,14 +1191,17 @@ static inline void rrd2rrdr_do_dimension(RRDR *r, size_t dim_id_in_rrdr) {
     time_t now_start_time = after_wanted - ops.query_granularity;
     time_t now_end_time   = after_wanted + ops.view_update_every - ops.query_granularity;
 
+    size_t db_points_read_since_plan_switch = 0; (void)db_points_read_since_plan_switch;
+
     // The main loop, based on the query granularity we need
     for( ; points_added < points_wanted ; now_start_time = now_end_time, now_end_time += ops.view_update_every) {
 
-        if(query_plan_should_switch_plan(ops, now_end_time))
+        if(unlikely(query_plan_should_switch_plan(ops, now_end_time))) {
             query_planer_next_plan(&ops, now_end_time, new_point.end_time);
+            db_points_read_since_plan_switch = 0;
+        }
 
         // read all the points of the db, prior to the time we need (now_end_time)
-
 
         size_t count_same_end_time = 0;
         while(count_same_end_time < 100) {
@@ -1223,6 +1226,7 @@ static inline void rrd2rrdr_do_dimension(RRDR *r, size_t dim_id_in_rrdr) {
 
             // fetch the new point
             {
+                db_points_read_since_plan_switch++;
                 STORAGE_POINT sp = ops.next_metric(&ops.handle);
 
                 ops.db_points_read_per_tier[ops.tier]++;
@@ -1280,9 +1284,10 @@ static inline void rrd2rrdr_do_dimension(RRDR *r, size_t dim_id_in_rrdr) {
 
             // check if the db is advancing the query
             if(unlikely(new_point.end_time <= last1_point.end_time)) {
-                internal_error(true, "QUERY: '%s', dimension '%s' next_metric() returned point %zu from %ld to %ld, before the last point %zu end time %ld, now is %ld to %ld",
+                internal_error(db_points_read_since_plan_switch > 1,
+                               "QUERY: '%s', dimension '%s' next_metric() returned point %zu from %ld to %ld, before the last point %zu from %ld to %ld, now is %ld to %ld",
                                qt->id, string2str(qm->dimension.id), new_point.id, new_point.start_time, new_point.end_time,
-                               last1_point.id, last1_point.end_time, now_start_time, now_end_time);
+                               last1_point.id, last1_point.start_time, last1_point.end_time, now_start_time, now_end_time);
 
                 count_same_end_time++;
                 continue;
