@@ -1350,35 +1350,35 @@ static inline void rrd2rrdr_do_dimension(RRDR *r, size_t dim_id_in_rrdr) {
                 current_point = new_point;
                 query_interpolate_point(current_point, last1_point, now_end_time);
 
-                internal_error(current_point.id > 0
-                                && last1_point.id == 0
-                                && current_point.end_time > after_wanted
-                                && current_point.end_time > now_end_time,
-                               "QUERY: '%s', dimension '%s', after %ld, before %ld, view update every %ld,"
-                               " query granularity %ld, interpolating point %zu (from %ld to %ld) at %ld,"
-                               " but we could really favor by having last_point1 in this query.",
-                               qt->id, string2str(qm->dimension.id),
-                               after_wanted, before_wanted,
-                               ops.view_update_every, ops.query_granularity,
-                               current_point.id, current_point.start_time, current_point.end_time,
-                               now_end_time);
+//                internal_error(current_point.id > 0
+//                                && last1_point.id == 0
+//                                && current_point.end_time > after_wanted
+//                                && current_point.end_time > now_end_time,
+//                               "QUERY: '%s', dimension '%s', after %ld, before %ld, view update every %ld,"
+//                               " query granularity %ld, interpolating point %zu (from %ld to %ld) at %ld,"
+//                               " but we could really favor by having last_point1 in this query.",
+//                               qt->id, string2str(qm->dimension.id),
+//                               after_wanted, before_wanted,
+//                               ops.view_update_every, ops.query_granularity,
+//                               current_point.id, current_point.start_time, current_point.end_time,
+//                               now_end_time);
             }
             else if(likely(now_end_time <= last1_point.end_time)) {
                 // our LAST point is still valid
                 current_point = last1_point;
                 query_interpolate_point(current_point, last2_point, now_end_time);
 
-                internal_error(current_point.id > 0
-                                && last2_point.id == 0
-                                && current_point.end_time > after_wanted
-                                && current_point.end_time > now_end_time,
-                               "QUERY: '%s', dimension '%s', after %ld, before %ld, view update every %ld,"
-                               " query granularity %ld, interpolating point %zu (from %ld to %ld) at %ld,"
-                               " but we could really favor by having last_point2 in this query.",
-                               qt->id, string2str(qm->dimension.id),
-                               after_wanted, before_wanted, ops.view_update_every, ops.query_granularity,
-                               current_point.id, current_point.start_time, current_point.end_time,
-                               now_end_time);
+//                internal_error(current_point.id > 0
+//                                && last2_point.id == 0
+//                                && current_point.end_time > after_wanted
+//                                && current_point.end_time > now_end_time,
+//                               "QUERY: '%s', dimension '%s', after %ld, before %ld, view update every %ld,"
+//                               " query granularity %ld, interpolating point %zu (from %ld to %ld) at %ld,"
+//                               " but we could really favor by having last_point2 in this query.",
+//                               qt->id, string2str(qm->dimension.id),
+//                               after_wanted, before_wanted, ops.view_update_every, ops.query_granularity,
+//                               current_point.id, current_point.start_time, current_point.end_time,
+//                               now_end_time);
             }
             else {
                 // a GAP, we don't have a value this time
